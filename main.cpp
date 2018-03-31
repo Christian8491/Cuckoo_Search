@@ -16,6 +16,7 @@
 #include <chrono>
 #include <random>								// normal_distribution()
 #include <algorithm>							// random_shuffle()
+#include <omp>
 
 using namespace std;
 
@@ -134,11 +135,13 @@ void normalDistribution(vector<double>& normalDistr, double& sigma, bool multipl
 	normal_distribution<double> distribution(0.0, 1.0);
 
 	if (multiplicate == true) {
+#pragma omp parallel for		
 		for (size_t i = 0; i < normalDistr.size(); ++i) {
 			normalDistr[i] = distribution(generator) * sigma;
 		}
 	}
 	else {
+#pragma omp parallel for		
 		for (size_t i = 0; i < normalDistr.size(); ++i) {
 			normalDistr[i] = distribution(generator);
 		}
@@ -160,11 +163,13 @@ vector<double> simpleBounds(vector<double>& s, vector<double>& lowerBound, vecto
 {
 	// Apply the lower bound
 	vector<double> nsTemp = s;
+#pragma omp parallel for	
 	for (size_t i = 0; i < s.size(); ++i) {
 		if (nsTemp[i] < lowerBound[i]) nsTemp[i] = lowerBound[i];
 	}
 
 	// Apply the upper bound
+#pragma omp parallel for	
 	for (size_t i = 0; i < s.size(); ++i) {
 		if (nsTemp[i] > upperBound[i]) nsTemp[i] = upperBound[i];
 	}
@@ -230,6 +235,7 @@ double getBestNest(vector<double>& bestNest, vector<vector<double>>& nest, vecto
 	// Find the current best
 	double fitnessMin = fitness[0][0];
 	int k = 0;
+#pragma omp parallel	
 	for (size_t i = 1; i < fitness.size(); ++i) {
 		if (fitness[i][0] < fitnessMin) {
 			fitnessMin = fitness[i][0];
@@ -260,7 +266,7 @@ vector<vector<double>> randPerm(vector<vector<double>> nest)
 		index[j] = index[i];
 		index[i] = t;
 	}
-
+#pragma omp parallel
 	for (int i = 0; i < n; i++) {
 		nestCopy[i] = nest[index[i]];
 	}
@@ -306,6 +312,7 @@ vector<vector<double>> emptyNests(vector<vector<double>>& nest, vector<double>& 
 
 	}
 
+#pragma omp parallel
 	for (int i = 0; i < n; ++i) {
 		vector<double> s = newNest[i];
 		newNest[i] = simpleBounds(s, lowerBound, upperBound);
